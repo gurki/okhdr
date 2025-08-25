@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Oklab Quantization Demo</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+    }
+    button, input {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 1.1em;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+    input[type="number"] {
+      width: 70px;
+      text-align: center;
+    }
+    .controls {
+      margin: 20px;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .swatches {
+      display: flex;
+      gap: 40px;
+      flex: 1;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    .swatch-container {
+      flex: 1;
+      max-width: 40%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .swatch {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    .hex-label {
+      font-family: monospace;
+      font-size: 1.1em;
+      color: #ccc;
+    }
+    .error {
+      margin: 20px;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button id="randomize">Randomize</button>
+    <label>L bits: <input id="bitsL" type="number" min="1" max="16" value="12"></label>
+    <label>a bits: <input id="bitsA" type="number" min="1" max="16" value="10"></label>
+    <label>b bits: <input id="bitsB" type="number" min="1" max="16" value="10"></label>
+    <label><input id="lockTotal" type="checkbox"> Lock total bits</label>
+    <label>Total: <input id="totalBits" type="number" min="8" max="48" value="32"></label>
+    <label>L max: <input id="Lmax" type="number" min="1" max="10" step="0.1" value="2.0"></label>
+  </div>
+
+  <div class="swatches">
+    <div class="swatch-container">
+      <div id="original" class="swatch"></div>
+      <div id="hexOriginal" class="hex-label">#------</div>
+    </div>
+    <div class="swatch-container">
+      <div id="quantized" class="swatch"></div>
+      <div id="hexQuantized" class="hex-label">#------</div>
+    </div>
+  </div>
+
+  <div id="error" class="error"></div>
+
+  <script type="module">
+    import Color from "https://cdn.jsdelivr.net/npm/colorjs.io/dist/color.js";
+
+    // --- Quantization helpers ---
+    function encodeOklab(L, a, b, bitsL, bitsA, bitsB, Lmax) {
+      const maxL = (1 << bitsL) - 1;
+      const maxA = (1 << bitsA) - 1;
+      const maxB = (1 << bitsB) - 1;
+
+      const Lbits = Math.round((L / Lmax) * maxL);
+      const abits = Math.round((a + 0.5) * maxA);
+      const bbits = Math.round((b + 0.5) * maxB);
+
+      return (Lbits << (bitsA + bitsB)) | (abits << bitsB) | bbits;
+    }
+
+    function decodeOklab(packed, bitsL, bitsA, bitsB, Lmax) {
+      const maxL = (1 << bitsL) - 1;
+      const maxA = (1 << bitsA) - 1;
+      const maxB = (1 << bitsB) - 1;
+
+      const bbits = packed & maxB;
+      const abits = (packed >> bitsB) & maxA;
+      const Lbits = (packed >> (bitsA + bitsB)) & maxL;
+
+      return {
+        L: (Lbits / maxL) * Lmax,
+        a: abits / maxA - 0.5,
+        b: bbits / maxB - 0.5
+      };
+    }
+
+    // --- Random Oklab color generator ---
+    function randomOklab(Lmax) {
+      return {
+        L: Math.random() * Lmax,
+        a: Math.random() - 0.5,
+        b: Math.random() - 0.5
+      };
+    }
+
+    let currentColor = randomOklab(2.0);
+
+    // --- Update swatches ---
+    function updateColors() {
+      const bitsL = parseInt(document.getElementById("bitsL").value, 10);
+      const bitsA = parseInt(document.getElementById("bitsA").value, 10);
+      const bitsB = parseInt(document.getElementById("bitsB").value, 10);
+      const Lmax = parseFloat(document.getElementById("Lmax").value);
+
+      const orig = currentColor;
+      const packed = encodeOklab(orig.L, orig.a, orig.b, bitsL, bitsA, bitsB, Lmax);
+      const quant = decodeOklab(packed, bitsL, bitsA, bitsB, Lmax);
+
+      // CSS color mapping
+      function oklabToCss(L, a, b) {
+        if (L <= 1.0) {
+          return `oklab(${L} ${a} ${b})`;
+        } else {
+          const c = new Color("oklab", [L, a, b]).to("p3");
+        //   const [r, g, bl] = c.coords.map(v => Math.min(Math.max(v, 0), 1));
+          return c.display();
+        }
+      }
+
+      // Update swatches
+      document.getElementById("original").style.background = oklabToCss(orig.L, orig.a, orig.b);
+      document.getElementById("quantized").style.background = oklabToCss(quant.L, quant.a, quant.b);
+
+      // ΔE in Oklab
+      const origColor = new Color("oklab", [orig.L, orig.a, orig.b]);
+      const quantColor = new Color("oklab", [quant.L, quant.a, quant.b]);
+      const deltaE = origColor.deltaE(quantColor, { method: "2000" });
+      document.getElementById("error").textContent = `ΔE00 (Oklab) = ${deltaE.toFixed(4)}`;
+
+      // --- sRGB hex labels ---
+      const origHex = origColor.to("srgb").toString({ format: "hex" });
+      const quantHex = quantColor.to("srgb").toString({ format: "hex" });
+      document.getElementById("hexOriginal").textContent = origHex;
+      document.getElementById("hexQuantized").textContent = quantHex;
+    }
+
+    // --- Lock total bits logic ---
+    function enforceTotalBits(changed) {
+      const lock = document.getElementById("lockTotal").checked;
+      if (!lock) return;
+
+      const total = parseInt(document.getElementById("totalBits").value, 10);
+      let bitsL = parseInt(document.getElementById("bitsL").value, 10);
+      let bitsA = parseInt(document.getElementById("bitsA").value, 10);
+      let bitsB = parseInt(document.getElementById("bitsB").value, 10);
+
+      const currentTotal = bitsL + bitsA + bitsB;
+      if (currentTotal === total) return;
+
+      if (changed === "L") {
+        const remaining = total - bitsL;
+        const ratio = bitsA / (bitsA + bitsB || 1);
+        bitsA = Math.max(1, Math.round(remaining * ratio));
+        bitsB = Math.max(1, remaining - bitsA);
+      } else {
+        const remaining = total - (bitsA + bitsB);
+        bitsL = Math.max(1, remaining);
+      }
+
+      document.getElementById("bitsL").value = bitsL;
+      document.getElementById("bitsA").value = bitsA;
+      document.getElementById("bitsB").value = bitsB;
+    }
+
+    // --- Event listeners ---
+    document.getElementById("randomize").addEventListener("click", () => {
+      const Lmax = parseFloat(document.getElementById("Lmax").value);
+      currentColor = randomOklab(Lmax);
+      updateColors();
+    });
+    document.getElementById("bitsL").addEventListener("input", () => { enforceTotalBits("L"); updateColors(); });
+    document.getElementById("bitsA").addEventListener("input", () => { enforceTotalBits("A"); updateColors(); });
+    document.getElementById("bitsB").addEventListener("input", () => { enforceTotalBits("B"); updateColors(); });
+    document.getElementById("lockTotal").addEventListener("change", () => { enforceTotalBits(); updateColors(); });
+    document.getElementById("totalBits").addEventListener("input", () => { enforceTotalBits(); updateColors(); });
+    document.getElementById("Lmax").addEventListener("input", updateColors);
+
+    updateColors();
+  </script>
+</body>
+</html>
