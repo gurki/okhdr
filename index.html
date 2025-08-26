@@ -5,14 +5,10 @@
   <title>Oklab Quantization Demo</title>
   <style>
     body {
-      margin: 20px; /* margin around the whole page */
+      margin: 10px;
       background: #111;
       color: white;
       font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - 40px); /* account for margin */
-      overflow: hidden; /* no scrolling */
       box-sizing: border-box;
     }
 
@@ -37,7 +33,7 @@
     }
 
     .panel {
-      margin: 0 auto;
+      margin: 0 auto 10px auto;
       padding: 10px 15px;
       background: #222;
       border-radius: 10px;
@@ -47,7 +43,6 @@
       max-width: 900px;
       width: 100%;
       font-size: 0.85em;
-      margin-bottom: 50px;
     }
 
     .panel label {
@@ -57,13 +52,12 @@
     }
 
     .swatches {
-      flex: 1; /* take remaining space */
       display: flex;
       gap: 20px;
       align-items: center;
       justify-content: center;
       width: 100%;
-      min-height: 0; /* prevent overflow */
+      margin-bottom: 15px;
     }
 
     .swatch-container {
@@ -89,10 +83,10 @@
     }
 
     .error {
-      /* background-color: #222; */
       font-size: 1em;
       text-align: center;
-      flex-shrink: 0; /* never shrink away */
+      margin-top: -20px;
+      color: #ff8080; /* make it stand out */
     }
   </style>
 </head>
@@ -271,6 +265,7 @@
     }
 
     function batchTest(Lstep = 0.01, astep = 0.01, bstep = 0.01) {
+      const preset = document.getElementById("preset").value;
       const bitsL = parseInt(document.getElementById("bitsL").value, 10);
       const bitsA = parseInt(document.getElementById("bitsA").value, 10);
       const bitsB = parseInt(document.getElementById("bitsB").value, 10);
@@ -298,7 +293,8 @@
       
       const avg = total / samples;
       document.getElementById("error").textContent =
-        `ΔE00 avg=${avg.toFixed(4)} min=${min.toFixed(4)} max=${max.toFixed(4)} (n=${samples})`;
+        `| ${preset} | ${bitsL}:${bitsA}:${bitsB} | ${avg.toFixed(4)} | ${max.toFixed(4)} |`;
+        // `ΔE00 avg=${avg.toFixed(4)} max=${max.toFixed(4)} (n=${samples})`;
     }
 
     document.getElementById("randomize").addEventListener("click", () => {
@@ -308,7 +304,7 @@
       currentColor = randomOklab(Lmax, Arange, Brange);
       updateColors();
     });
-    document.getElementById("batchTest").addEventListener("click", () => batchTest(100_000));
+    document.getElementById("batchTest").addEventListener("click", () => batchTest());
     document.getElementById("bitsL").addEventListener("input", () => { enforceTotalBits("L"); updateColors(); });
     document.getElementById("bitsA").addEventListener("input", () => { enforceTotalBits("A"); updateColors(); });
     document.getElementById("bitsB").addEventListener("input", () => { enforceTotalBits("B"); updateColors(); });
