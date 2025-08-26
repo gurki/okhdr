@@ -89,7 +89,7 @@
     }
 
     .error {
-      margin: 10px 0 0 0;
+      /* background-color: #222; */
       font-size: 1em;
       text-align: center;
       flex-shrink: 0; /* never shrink away */
@@ -270,7 +270,7 @@
       updateColors();
     }
 
-    function batchTest(samples = 1000) {
+    function batchTest(Lstep = 0.01, astep = 0.01, bstep = 0.01) {
       const bitsL = parseInt(document.getElementById("bitsL").value, 10);
       const bitsA = parseInt(document.getElementById("bitsA").value, 10);
       const bitsB = parseInt(document.getElementById("bitsB").value, 10);
@@ -279,8 +279,12 @@
       const Brange = parseFloat(document.getElementById("Brange").value);
 
       let total = 0, min = Infinity, max = -Infinity;
-      for (let i = 0; i < samples; i++) {
-        const c = randomOklab(Lmax, Arange, Brange);
+      let samples = 0;
+      
+      for ( let L = 0; L < Lmax; L += Lstep ) {
+      for ( let a = -Arange; a < Arange; a += astep ) {
+      for ( let b = -Brange; b < Brange; b += bstep ) {
+        const c = { L, a, b };
         const packed = encodeOklab(c.L, c.a, c.b, bitsL, bitsA, bitsB, Lmax, Arange, Brange);
         const q = decodeOklab(packed, bitsL, bitsA, bitsB, Lmax, Arange, Brange);
         const origColor = new Color("oklab", [c.L, c.a, c.b]);
@@ -289,7 +293,9 @@
         total += dE;
         if (dE < min) min = dE;
         if (dE > max) max = dE;
-      }
+        samples++;
+      }}}
+      
       const avg = total / samples;
       document.getElementById("error").textContent =
         `ΔE00 avg=${avg.toFixed(4)} min=${min.toFixed(4)} max=${max.toFixed(4)} (n=${samples})`;
