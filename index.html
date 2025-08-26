@@ -275,7 +275,7 @@
 
       let total = 0, min = Infinity, max = -Infinity;
       let samples = 0;
-      
+
       for ( let L = 0; L < Lmax; L += Lstep ) {
       for ( let a = -Arange; a < Arange; a += astep ) {
       for ( let b = -Brange; b < Brange; b += bstep ) {
@@ -290,10 +290,10 @@
         if (dE > max) max = dE;
         samples++;
       }}}
-      
+
       const avg = total / samples;
       document.getElementById("error").textContent =
-        `| ${preset} | ${bitsL}:${bitsA}:${bitsB} | ${avg.toFixed(4)} | ${max.toFixed(4)} |`;
+        `| ${preset} | ${bitsL}:${bitsA}:${bitsB} | ${bitsL+bitsA+bitsB} | ${avg.toFixed(4)} | ${max.toFixed(4)} |`;
         // `ΔE00 avg=${avg.toFixed(4)} max=${max.toFixed(4)} (n=${samples})`;
     }
 
