@@ -1,13 +1,3 @@
-<!-- -->
----
-title: okhdr
-symbol: 👌
-tags: [color, data, format, specification, compression, texture, storage, graphics, rendering, shading]
-status: draft
-createdAt: 2025-08-26T00:53:13+02:00
-description: a packed, perceptually uniform hdr color storage format
----
-
 # okhdr 👌
 > a packed, perceptually uniform hdr color storage format
 
