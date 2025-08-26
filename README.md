@@ -1,5 +1,9 @@
 # okhdr 👌
-> a packed, perceptually uniform hdr color storage format
+> a perceptually uniform hdr color storage format
+
+## Description
+quantize unconstrained `oklab` source of truth to optimal ranges and step sizes.
+considered `oklch` as well, but has multiple issues (lossy, error-prone wrap-around handling, little benefit in information density).
 
 ## JND
 the just noticable difference.
@@ -7,7 +11,7 @@ the just noticable difference.
 - ΔE < 2.0: differences are invisible in motion or at distance (general display / UI / LED animations)
 - ΔE < 3.0: can be acceptable, if audience is far away and the context is dynamic (stage lighting, aerial light shows)
 
-## quantization
+## Quantization
 brute forced at `step = 0.01` for L, a, b respectively.
 this corresponds to imperceptible differences in oklab lightness.
 - sRGB / SDR: L \in [0,1] ~ 80 nits (D65 reference white)
