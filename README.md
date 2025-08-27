@@ -1,6 +1,39 @@
 # okhdr 👌
 > a perceptually uniform hdr color storage format
 
+## Specification
+
+### Layout
+```
+31          20 19        10 9          0
++--------------+------------+------------+
+|   L (12)     |   a (10)   |   b (10)   |
++--------------+------------+------------+
+```
+
+### Implementation
+```
+// 12:10:10 Oklab packing (32 bits total)
+// Layout: [ L:12 | a:10 | b:10 ]
+// Ranges: L ∈ [0,2], a ∈ [-0.5,+0.5], b ∈ [-0.5,+0.5]
+
+uint32_t pack( float L, float a, float b ) {
+    uint32_t Lbits = (uint32_t)roundf( ( L / 2.0f ) * 4095.0f );            // 12 bits
+    uint32_t abits = (uint32_t)roundf(( ( a + 0.5f ) / 1.0f ) * 1023.0f );  // 10 bits
+    uint32_t bbits = (uint32_t)roundf(( ( b + 0.5f ) / 1.0f ) * 1023.0f );  // 10 bits
+    return ( Lbits << 20 ) | ( abits << 10 ) | bbits;
+}
+
+void unpack( uint32_t p, float* L, float* a, float* b ) {
+    uint32_t Lbits = ( p >> 20 ) & 0xFFF;
+    uint32_t abits = ( p >> 10 ) & 0x3FF;
+    uint32_t bbits =  p        & 0x3FF;
+    *L = ( Lbits / 4095.0f ) * 2.0f;
+    *a = ( abits / 1023.0f ) - 0.5f;
+    *b = ( bbits / 1023.0f ) - 0.5f;
+}
+```
+
 ## Description
 quantize unconstrained `oklab` source of truth to optimal ranges and step sizes.
 considered `oklch` as well, but has multiple issues (lossy, error-prone wrap-around handling, little benefit in information density).
