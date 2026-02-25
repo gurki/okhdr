@@ -14,7 +14,8 @@
 ### Implementation
 ```
 // 10:10:10 Oklab packing (30 bits total)
-// Layout: [ alpha:2 | b:10 | a:10 | L:10 ]; can be stored e.g. in `rgb10a2uint` / `A2B10G10R10_UINT_PACK32` texture
+// Layout: [ b:10 | a:10 | L:10 ]
+//   can be stored e.g. in `rgb10a2uint` / `A2B10G10R10_UINT_PACK32` texture
 // Ranges: L ∈ [0,2], a ∈ [-0.5,+0.5], b ∈ [-0.5,+0.5]
 // Info: Encloses all of Rec. 2020, and HDR up to 1000 nits
 
