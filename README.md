@@ -7,28 +7,29 @@
 ```
 31          20 19        10 9          0
 +--------------+------------+------------+
-|   L (12)     |   a (10)   |   b (10)   |
+| |   b (10)   |   a (10)   |   L (10)   |
 +--------------+------------+------------+
 ```
 
 ### Implementation
 ```
-// 12:10:10 Oklab packing (32 bits total)
-// Layout: [ L:12 | a:10 | b:10 ]
+// 10:10:10 Oklab packing (30 bits total)
+// Layout: [ alpha:2 | b:10 | a:10 | L:10 ]; can be stored e.g. in `rgb10a2uint` / `A2B10G10R10_UINT_PACK32` texture
 // Ranges: L ∈ [0,2], a ∈ [-0.5,+0.5], b ∈ [-0.5,+0.5]
+// Info: Encloses all of Rec. 2020, and HDR up to 1000 nits
 
 uint32_t pack( float L, float a, float b ) {
-    uint32_t Lbits = (uint32_t)roundf( ( L / 2.0f ) * 4095.0f );            // 12 bits
-    uint32_t abits = (uint32_t)roundf(( ( a + 0.5f ) / 1.0f ) * 1023.0f );  // 10 bits
-    uint32_t bbits = (uint32_t)roundf(( ( b + 0.5f ) / 1.0f ) * 1023.0f );  // 10 bits
-    return ( Lbits << 20 ) | ( abits << 10 ) | bbits;
+    uint32_t Lbits = (uint32_t)roundf( ( L / 2.0f ) * 1023.0f );            //  10 bits
+    uint32_t abits = (uint32_t)roundf( ( ( a + 0.5f ) / 1.0f ) * 1023.0f ); //  10 bits
+    uint32_t bbits = (uint32_t)roundf( ( ( b + 0.5f ) / 1.0f ) * 1023.0f ); //  10 bits
+    return ( bbits << 20 ) | ( abits << 10 ) | Lbits;
 }
 
 void unpack( uint32_t p, float* L, float* a, float* b ) {
-    uint32_t Lbits = ( p >> 20 ) & 0xFFF;
+    uint32_t Lbits =  p & 0x3FF;
     uint32_t abits = ( p >> 10 ) & 0x3FF;
-    uint32_t bbits =  p        & 0x3FF;
-    *L = ( Lbits / 4095.0f ) * 2.0f;
+    uint32_t bbits = ( p >> 20 ) & 0x3FF;
+    *L = ( Lbits / 1023.0f ) * 2.0f;
     *a = ( abits / 1023.0f ) - 0.5f;
     *b = ( bbits / 1023.0f ) - 0.5f;
 }
@@ -78,9 +79,9 @@ this corresponds to imperceptible differences in oklab lightness.
 `L=2, a=0.5, b=0.5`
 | packing      | bits | avg    | max    |
 | ------------ | ---- | ------ | ------ |
-| **12:10:10** | 32   | 0.0458 | 0.7359 |
+| 12:10:10     | 32   | 0.0458 | 0.7359 |
 | 12:9:9       | 30   | 0.0884 | 1.5480 |
-| 10:10:10     | 30   | 0.0661 | 0.9285 |
+| **10:10:10** | 30   | 0.0661 | 0.9285 |
 | 11:9:9       | 29   | 0.0918 | 1.5534 |
 | 10:9:9       | 28   | 0.1027 | 1.7146 |
 | 9:7:8        | 24   | 0.2662 | 3.6240 |
