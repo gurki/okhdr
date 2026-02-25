@@ -38,7 +38,7 @@ void unpack( uint32_t p, float* L, float* a, float* b ) {
 
 ## Description
 quantize unconstrained `oklab` source of truth to optimal ranges and step sizes.
-considered `oklch` as well, but has multiple issues (lossy, error-prone wrap-around handling, little benefit in information density).
+considered `oklch` as well, but has little advantage over staying in a perceptually linear uniform space.
 
 ## JND
 the just noticable difference.
