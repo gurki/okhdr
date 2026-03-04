@@ -17,7 +17,8 @@
 // Layout: [ b:10 | a:10 | L:10 ]
 //   can be stored e.g. in `rgb10a2uint` / `A2B10G10R10_UINT_PACK32` texture
 // Ranges: L ∈ [0,2], a ∈ [-0.5,+0.5], b ∈ [-0.5,+0.5]
-// Info: Encloses all of Rec. 2020, and HDR up to 1000 nits
+// Info: Encloses all of Rec. 2020, and HDR up to 8x reference white
+//   (e.g. 1600 nits with D65 at 203 cd/m² from ITU-R BT.2408)
 
 uint32_t pack( float L, float a, float b ) {
     uint32_t Lbits = (uint32_t)roundf( ( L / 2.0f ) * 1023.0f );            //  10 bits
@@ -49,9 +50,10 @@ the just noticable difference.
 ## Quantization
 brute forced at `step = 0.01` for L, a, b respectively.
 this corresponds to imperceptible differences in oklab lightness.
-- sRGB / SDR: L \in [0,1] ~ 80 nits (D65 reference white)
-- HDR10 / Dolby Vision: L \in [0,2] ~10k nits (1k monitor, 10k outdoor led board)
-- Shader: L \in [0,4] ~1mil nits (sunlight)
+- sRGB / SDR: L \in [0,1] ~200 nits (D65 reference white)
+- HDR10 / Dolby Vision: L \in [0,2] ~1600 nits (phones, hdr monitors)
+- Rec.2100: L \in [0,4] ~13k nits (full PQ range, reference monitors, outdoor led boards)
+- Shader: L \in [0,inf] ~1mil nits (sunlight)
 
 ### srgb
 `L=1, a=0.25, b=0.31`
