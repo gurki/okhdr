@@ -28,7 +28,7 @@ uint32_t pack( float L, float a, float b ) {
 }
 
 void unpack( uint32_t p, float* L, float* a, float* b ) {
-    uint32_t Lbits =  p & 0x3FF;
+    uint32_t Lbits = p & 0x3FF;
     uint32_t abits = ( p >> 10 ) & 0x3FF;
     uint32_t bbits = ( p >> 20 ) & 0x3FF;
     *L = ( Lbits / 1023.0f ) * 2.0f;
